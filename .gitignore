@@ -1,0 +1,47 @@
+# =========================
+# KEIL / ARM TOOLCHAIN - BUILD OUTPUT
+# =========================
+Objects/
+Listings/
+Debug/
+Release/
+*.o
+*.axf
+*.hex
+*.bin
+*.map
+*.dep
+*.lnp
+*.crf
+*.d
+*.lst
+*.build_log.htm
+*.htm
+
+# Keil per-target build folder (named after your project/target,
+# e.g. MDK-ARM/USART/ ) — everything inside is build output
+MDK-ARM/*/
+
+# =========================
+# STM32Cube / Generated
+# =========================
+*.bak
+*.tmp
+
+# =========================
+# IDE SETTINGS
+# =========================
+.vscode/
+*.uvoptx
+*.uvguix.*
+
+# =========================
+# OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# LOGS
+# =========================
+*.log
