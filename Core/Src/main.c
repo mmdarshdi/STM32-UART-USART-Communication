@@ -45,7 +45,11 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
-
+/* rx_buffer and i are declared once, globally, further down (USER CODE BEGIN 4)
+ * so that both main() and HAL_UART_RxCpltCallback() share the SAME variables
+ * instead of main() writing to a local shadow copy. Declared volatile since
+ * they are shared between interrupt context (the callback) and main(). */
+/* USER CODE END PV */
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -100,24 +104,43 @@ uint8_t data2[]={1,2,3,4};
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//		HAL_UART_Transmit(&huart1,data2,sizeof(data2),1000);
-//		HAL_UART_Transmit_IT(&huart1,DATA,sizeof(DATA));
-		
-/////////////////////////////////////////////////////////////	
-//		HAL_UART_Receive (&huart1, rx_buffer, 12,5000);
-//		while(Receive[i] != 13)i++;
-//    HAL_UART_Transmit(&huart1, rx_buffer, i, 100);
-//		HAL_Delay(500);
-		
-/////////////////////////////////////
 
-//    HAL_UART_Transmit_IT(&huart1,data2,1);
-//		HAL_Delay(500);
-//		data2[0]=i++;
+// TANSSMIT DATA WITH serial communication
+
+		// Block until up to 12 bytes are received, or 5s timeout elapses.
+		// rx_buffer will hold whatever bytes arrived (fewer than 12 if the
+		// sender stops early, e.g. after pressing Enter in a terminal).
+		HAL_UART_Receive (&huart1,rx_buffer, 12,5000);
+
+		// Scan rx_buffer for a carriage return (ASCII 13, '\r'), which marks
+		// the end of the line the user typed. i ends up pointing at the
+		// index of that '\r'.
+		// NOTE: if no '\r' is ever received (e.g. timeout with garbage or
+		// no data), this loop reads past the buffer with no bound check —
+		// fine for this quick training test, but not safe for production code.
+		while(rx_buffer[i] != 13)i++;
+
+		// Echo back only the bytes received before the '\r' (i.e. the
+		// actual line content, not the '\r' itself or trailing buffer junk).
+    HAL_UART_Transmit(&huart1,rx_buffer, i, 100);
+		HAL_Delay(500);
+	
+/////////////////////// INCREMENTING COUNTER TEST (interrupt transmit) //////
+		// Send only the first byte of data2 using interrupt-driven transmit.
+		// HAL_UART_Transmit_IT() returns immediately; the actual transfer
+		// happens in the background via USART1 interrupt.
+    HAL_UART_Transmit_IT(&huart1,data2,1);
+ 
+		// Give the interrupt transmit time to finish, and make each byte
+		// visible on the receiving terminal at a readable pace.
+		HAL_Delay(500);
+ 
+		// Overwrite data2[0] with the current value of counter i, then
+		// increment i for next time. Each loop iteration transmits the next
+		// value in the sequence: 0, 1, 2, 3... This tests that repeated
+		// interrupt-driven transmits work correctly back-to-back.
+		data2[0]=i++;
 ///////////////////////////////////////////		
-		HAL_UART_Receive_IT (&huart1,rx_buffer, 2);
-//		HAL_UART_Transmit_IT(&huart1,DATA,sizeof(DATA));
-		
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
